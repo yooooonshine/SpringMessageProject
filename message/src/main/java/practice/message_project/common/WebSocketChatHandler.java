@@ -1,5 +1,6 @@
 package practice.message_project.common;
 
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -21,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 public class WebSocketChatHandler extends TextWebSocketHandler {
+
 	private final ObjectMapper mapper;
 
 	// 현재 연결된 세션들
@@ -32,7 +34,6 @@ public class WebSocketChatHandler extends TextWebSocketHandler {
 	// 소켓 연결 확인
 	@Override
 	public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-		// TODO Auto-generated method stub
 		log.info("{} 연결됨", session.getId());
 		sessions.add(session);
 	}
@@ -52,39 +53,37 @@ public class WebSocketChatHandler extends TextWebSocketHandler {
 		if(!chatRoomSessionMap.containsKey(chatRoomId)){
 			chatRoomSessionMap.put(chatRoomId,new HashSet<>());
 		}
-		Set<WebSocketSession> chatRoomSession = chatRoomSessionMap.get(chatRoomId);
+		Set<WebSocketSession> chatRoomSessions = chatRoomSessionMap.get(chatRoomId);
 
 		// message 에 담긴 타입을 확인한다.
 		// 이때 message 에서 getType 으로 가져온 내용이
 		// ChatDTO 의 열거형인 MessageType 안에 있는 ENTER 과 동일한 값이라면
 		if (chatMessageDto.getMessageType().equals(ChatMessageDto.MessageType.ENTER)) {
 			// sessions 에 넘어온 session 을 담고,
-			chatRoomSession.add(session);
+			chatRoomSessions.add(session);
 		}
-		if (chatRoomSession.size()>=3) {
-			removeClosedSession(chatRoomSession);
+		if (chatRoomSessions.size()>=3) {
+			removeClosedSession(chatRoomSessions);
 		}
-		sendMessageToChatRoom(chatMessageDto, chatRoomSession);
+		sendMessageToChatRoom(chatMessageDto, chatRoomSessions);
 
 	}
 
 	// 소켓 종료 확인
 	@Override
 	public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-		// TODO Auto-generated method stub
 		log.info("{} 연결 끊김", session.getId());
 		sessions.remove(session);
 	}
 
 	// ====== 채팅 관련 메소드 ======
-	private void removeClosedSession(Set<WebSocketSession> chatRoomSession) {
-		chatRoomSession.removeIf(sess -> !sessions.contains(sess));
+	private void removeClosedSession(Set<WebSocketSession> chatRoomSessions) {
+		chatRoomSessions.removeIf(sess -> !sessions.contains(sess));
 	}
 
 	private void sendMessageToChatRoom(ChatMessageDto chatMessageDto, Set<WebSocketSession> chatRoomSession) {
-		chatRoomSession.parallelStream().forEach(sess -> sendMessage(sess, chatMessageDto));//2
+		chatRoomSession.parallelStream().forEach(sess -> sendMessage(sess, chatMessageDto));
 	}
-
 
 	public <T> void sendMessage(WebSocketSession session, T message) {
 		try{
@@ -93,4 +92,5 @@ public class WebSocketChatHandler extends TextWebSocketHandler {
 			log.error(e.getMessage(), e);
 		}
 	}
+
 }
