@@ -11,7 +11,7 @@ public class MessageResponse {
 		this.text = text;
 	}
 
-	public static MessageResponse create(ChatMessage chatMessage) {
-		return new MessageResponse(chatMessage.getText());
+	public static MessageResponse create(Chat chat) {
+		return new MessageResponse(chat.getMessage());
 	}
 }

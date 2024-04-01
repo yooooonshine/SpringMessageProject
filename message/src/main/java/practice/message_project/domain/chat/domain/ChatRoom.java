@@ -12,6 +12,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import practice.message_project.domain.Member.domain.Member;
 
 @Entity
 @Getter
@@ -23,19 +24,15 @@ public class ChatRoom {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	// 채팅방 이름
-	@NotBlank
-	private String name;
-
 	@OneToMany(mappedBy = "chatRoom")
-	private List<ChatMessage> chatMessages = new ArrayList<>();
+	private List<Chat> chats = new ArrayList<>();
 
-	private ChatRoom(String name) {
-		this.name = name;
+	public static ChatRoom create() {
+		return new ChatRoom();
 	}
 
-	public static ChatRoom create(String name) {
-		return new ChatRoom(name);
+	public void addChat(Chat chat) {
+		chats.add(chat);
 	}
 
 }
