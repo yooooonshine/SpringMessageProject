@@ -4,12 +4,10 @@ import lombok.*;
 import practice.message_project.domain.chat.domain.Chat;
 
 @Getter
-@Setter
-@NoArgsConstructor
 public class ChatRequest {
 	// 메시지  타입 : 입장, 채팅
 	public enum MessageType{
-		ENTER, TALK, OUT
+		TALK, OUT
 	}
 
 	private MessageType messageType; // 메시지 타입

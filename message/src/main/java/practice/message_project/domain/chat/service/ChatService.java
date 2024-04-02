@@ -11,6 +11,8 @@ import practice.message_project.domain.chat.domain.ChatRoom;
 import practice.message_project.domain.chat.domain.ChatRoomMember;
 import practice.message_project.domain.chat.domain.MessageResponse;
 import practice.message_project.domain.chat.dto.request.ChatRequest;
+import practice.message_project.domain.chat.dto.response.RoomResponse;
+import practice.message_project.domain.chat.dto.response.RoomsResponse;
 import practice.message_project.domain.chat.repository.ChatRepository;
 import practice.message_project.domain.chat.repository.ChatRoomMemberRepository;
 import practice.message_project.domain.chat.repository.ChatRoomRepository;
@@ -21,101 +23,87 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 
 @Slf4j
-@Data
 @Service
 @Transactional
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
 public class ChatService {
-	private final String WELCOME_MESSAGE = "대화를 시작해보세요.";
-	private final String OUT_MESSAGE = "{}님이 채팅방에서 나가셨습니다.";
+	private final String OUT_MESSAGE = "%s님이 채팅방에서 나가셨습니다.";
 
 	private final ChatRoomRepository chatRoomRepository;
 	private final ChatRepository chatRepository;
 	private final ChatRoomMemberRepository chatRoomMemberRepository;
 	private final MemberRepository memberRepository;
 
+
+	//모든 방 찾기
 	@Transactional(readOnly = true)
 	public List<ChatRoom> findAllRoom(){
 		return chatRoomRepository.findAll();
 	}
 
+
+	//멤버가 참여하는 방 찾기
 	@Transactional(readOnly = true)
-	public List<Long> findChatRoomsByMemberId(Long memberId){
+	public RoomsResponse findChatRoomsByMemberId(Long memberId){
 		Member member = memberRepository.findById(memberId).orElseThrow();
 
 		List<ChatRoomMember> chatRoomMembers = chatRoomMemberRepository.findAllByMember(member);
 
-		return chatRoomMembers.stream()
+		return RoomsResponse.create(chatRoomMembers.stream()
 			.map(chatRoomMember -> chatRoomMember.getChatRoom().getId())
-			.toList();
+			.toList());
 	}
 
-	public ChatRoom addRoom() {
+	//방 만들고 입장하기
+	public RoomResponse enterRoom(Long senderId, Long receiverId) {
+		Member sender = memberRepository.findById(senderId).orElseThrow();
+		Member receiver = memberRepository.findById(receiverId).orElseThrow();
+
+		//방 만들기
+		ChatRoom chatRoom = addRoom();
+
+		//방에 멤버 넣기
+		addChatRoomMember(chatRoom, sender);
+		addChatRoomMember(chatRoom, receiver);
+
+		return RoomResponse.create(chatRoom.getId());
+	}
+
+	//방 만들기
+	private ChatRoom addRoom() {
 		ChatRoom chatRoom = ChatRoom.create();
 
 		return chatRoomRepository.save(chatRoom);
 	}
 
-	public Chat addChat(ChatRequest chatRequest) {
-		Member sender = memberRepository.findById(chatRequest.getSenderId()).orElseThrow();
-		ChatRoom chatRoom = chatRoomRepository.findById(chatRequest.getChatRoomId()).orElseThrow();
-		String message = chatRequest.getMessage();
+	private Chat addChat(ChatRoom chatRoom, Member sender, String message) {
 
 		Chat chat = Chat.create(chatRoom, sender, message);
 
 		return chatRepository.save(chat);
 	}
 
-	public Chat addChat(ChatRoom chatRoom, Member sender, String message) {
 
-		Chat chat = Chat.create(chatRoom, sender, message);
-
-		return chatRepository.save(chat);
-	}
-
-	public ChatRoomMember addChatRoomMember(ChatRoom chatRoom, Member member) {
+	private ChatRoomMember addChatRoomMember(ChatRoom chatRoom, Member member) {
 		ChatRoomMember chatRoomMember = ChatRoomMember.create(chatRoom, member);
 
 		return chatRoomMemberRepository.save(chatRoomMember);
 	}
 
-	public void deleteChatRoomMember(ChatRoom chatRoom, Member member) {
-		ChatRoomMember chatRoomAndMember = chatRoomMemberRepository.findByChatRoomAndMember(chatRoom, member);
 
-		chatRoomMemberRepository.delete(chatRoomAndMember);
-	}
-
+	//채팅 응답 만들기
 	public Chat makeChat(ChatRequest chatRequest) {
-
-		if (chatRequest.getMessageType() == ChatRequest.MessageType.ENTER) {
-			return makeEnterChat(chatRequest);
-		} else if (chatRequest.getMessageType() == ChatRequest.MessageType.TALK) {
+		if (chatRequest.getMessageType() == ChatRequest.MessageType.TALK) {
 			return makeTalkChat(chatRequest);
 		} else {
 			return makeOutChat(chatRequest);
 		}
 	}
 
-	private Chat makeEnterChat(ChatRequest chatRequest) {
-		Member sender = memberRepository.findById(chatRequest.getSenderId()).orElseThrow();
-		Member receiver = memberRepository.findById(chatRequest.getReceiverId()).orElseThrow();
-		ChatRoom chatRoom = chatRoomRepository.findById(chatRequest.getChatRoomId()).orElseThrow();
-
-		log.info("makeEnterChat");
-
-		addChatRoomMember(chatRoom, sender);
-		addChatRoomMember(chatRoom, receiver);
-
-		Chat chat = addChat(chatRoom, sender, WELCOME_MESSAGE);
-
-		chatRoom.addChat(chat);
-
-		log.info("chatMessage : {}", chat.getMessage());
-
-		return chat;
-	}
-
+	//대화 채팅 만들기
 	private Chat makeTalkChat(ChatRequest chatRequest) {
+
+		log.info("makeTalkChat");
 		ChatRoom chatRoom = chatRoomRepository.findById(chatRequest.getChatRoomId()).orElseThrow();
 		Member sender = memberRepository.findById(chatRequest.getSenderId()).orElseThrow();
 		String message = chatRequest.getMessage();
@@ -129,13 +117,22 @@ public class ChatService {
 		return chat;
 	}
 
+	//나가기 채팅 만들기
 	private Chat makeOutChat(ChatRequest chatRequest) {
+
+		log.info("makeOutChat");
 		ChatRoom chatRoom = chatRoomRepository.findById(chatRequest.getChatRoomId()).orElseThrow();
 		Member sender = memberRepository.findById(chatRequest.getSenderId()).orElseThrow();
 
 		deleteChatRoomMember(chatRoom, sender);
+
+		//채팅방에 아무도 없으면 채팅방 및 채팅 삭제
+		if (!chatRoomMemberRepository.existsByChatRoom(chatRoom)) {
+			chatRoomRepository.delete(chatRoom);
+		}
+
 		//chat 저장하기
-		Chat chat = addChat(chatRoom, sender, OUT_MESSAGE);
+		Chat chat = addChat(chatRoom, sender, String.format(OUT_MESSAGE, sender.getNickName()));
 
 		//chatRoom에 chat 넣기
 		chatRoom.addChat(chat);
@@ -143,19 +140,7 @@ public class ChatService {
 		return chat;
 	}
 
-
-	// 채팅방 유저 리스트에 유저 추가
-	public String addMember(Long roomId, Long memberId){
-		ChatRoom room = chatRoomRepository.findById(roomId).orElseThrow();
-		Member member = memberRepository.findById(memberId).orElseThrow();
-
-		ChatRoomMember chatRoomMember = ChatRoomMember.create(room, member);
-
-		ChatRoomMember savedChatRoomMember = chatRoomMemberRepository.save(chatRoomMember);
-
-		return "ok";
-	}
-
+	// 방id로 방의 모든 message 찾기
 	@Transactional(readOnly = true)
 	public List<MessageResponse> findAllMessagesByRoomId(Long chatRoomId) {
 		ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId).orElseThrow();
@@ -169,13 +154,21 @@ public class ChatService {
 		return messageResponses;
 	}
 
+	// ChatRoomMember 삭제
+	public void deleteChatRoomMember(ChatRoom chatRoom, Member member) {
+		ChatRoomMember chatRoomMember = chatRoomMemberRepository.findByChatRoomAndMember(chatRoom, member).orElseThrow();
+
+		chatRoomMemberRepository.delete(chatRoomMember);
+	}
+
 	// 채팅방 유저 리스트 삭제
 	public void deleteMember(Long roomId, Long memberId){
 		ChatRoom room = chatRoomRepository.findById(roomId).orElseThrow();
 		Member member = memberRepository.findById(memberId).orElseThrow();
 
-		ChatRoomMember chatRoomMember = chatRoomMemberRepository.findByChatRoomAndMember(room, member);
+		ChatRoomMember chatRoomMember = chatRoomMemberRepository.findByChatRoomAndMember(room, member).orElseThrow();
 
 		chatRoomMemberRepository.delete(chatRoomMember);
 	}
+
 }

@@ -2,6 +2,8 @@ package practice.message_project.domain.chat.domain;
 
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.data.annotation.CreatedDate;
 
 import jakarta.persistence.Column;
@@ -29,6 +31,7 @@ public class Chat {
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "CHAT_ROOM_ID")
+	@OnDelete(action = OnDeleteAction.CASCADE)
 	private ChatRoom chatRoom;
 
 	@ManyToOne(fetch = FetchType.LAZY)

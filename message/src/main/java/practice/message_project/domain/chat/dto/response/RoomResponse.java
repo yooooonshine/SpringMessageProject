@@ -10,7 +10,7 @@ public class RoomResponse {
 		this.roomId = roomId;
 	}
 
-	public RoomResponse create(Long roomId) {
+	public static RoomResponse create(Long roomId) {
 		return new RoomResponse(roomId);
 	}
 }
