@@ -81,6 +81,7 @@ function getChatRooms() {
         url: '/rooms/member/' + senderId,
         async: false,
         dataType: 'JSON',
+        contentType : "application/json",
         success: function (data) {
             memberChatRoomIds = data.data.roomIds;
         },
@@ -190,20 +191,41 @@ $(function () {
 //     $('.col-md-12').scrollTop($('.col-md-12')[0].scrollHeight);
 // }
 //
-// //저장된 채팅 불러오기
-// function loadChat(chatList){
-//     if(chatList != null) {
-//         for(chat in chatList) {
-//             if (chatList[chat].senderEmail == senderEmail) {
-//                 $("#chatting").append(
-//                     "<div class = 'chatting_own'><tr><td>" + chatList[chat].message + "</td></tr></div>"
-//                 );
-//             } else {
-//                 $("#chatting").append(
-//                     "<div class = 'chatting'><tr><td>" + "[" + chatList[chat].sender + "] " + chatList[chat].message + "</td></tr></div>"
-//                 );
-//             }
-//         }
-//     }
-//     $('.col-md-12').scrollTop($('.col-md-12')[0].scrollHeight); // 채팅이 많아질시에 자동 스크롤
-// }
+
+
+//채팅방 채팅 내역 가져오기
+function getChats() {
+    let data = {
+        'senderId': senderId,
+    };
+
+    $.ajax({
+        type: 'post',
+        url: '/room',
+        async: true,
+        data: JSON.stringify(data),
+        dataType: 'JSON',
+        contentType : "application/json",
+        success: function (data) {
+            chatRoomId = data.data.roomId;
+        },
+    });
+}
+
+//채팅내역 쓰기
+function loadChat(chatList){
+    if(chatList != null) {
+        for(chat in chatList) {
+            if (chatList[chat].senderEmail == senderEmail) {
+                $("#chatting").append(
+                    "<div class = 'chatting_own'><tr><td>" + chatList[chat].message + "</td></tr></div>"
+                );
+            } else {
+                $("#chatting").append(
+                    "<div class = 'chatting'><tr><td>" + "[" + chatList[chat].sender + "] " + chatList[chat].message + "</td></tr></div>"
+                );
+            }
+        }
+    }
+    $('.col-md-12').scrollTop($('.col-md-12')[0].scrollHeight); // 채팅이 많아질시에 자동 스크롤
+}
