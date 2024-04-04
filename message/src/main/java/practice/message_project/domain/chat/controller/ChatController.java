@@ -20,7 +20,6 @@ import practice.message_project.common.dto.CustomResponse;
 import practice.message_project.domain.chat.domain.Chat;
 import practice.message_project.domain.chat.dto.request.RoomEnterRequest;
 import practice.message_project.domain.chat.dto.response.ChatResponse;
-import practice.message_project.domain.chat.domain.MessageResponse;
 import practice.message_project.domain.chat.dto.request.ChatRequest;
 import practice.message_project.domain.chat.dto.response.RoomResponse;
 import practice.message_project.domain.chat.service.ChatService;
@@ -56,10 +55,10 @@ public class ChatController {
 	//채팅방 메세지 가져오기
 	@GetMapping("{chatRoomId}/messages")
 	@ResponseBody
-	public CustomResponse<List<MessageResponse>> messageList(@PathVariable Long chatRoomId) {
-		List<MessageResponse> messageResponses = chatService.findAllMessagesByRoomId(chatRoomId);
+	public CustomResponse<List<ChatResponse>> messageList(@PathVariable Long chatRoomId) {
+		List<ChatResponse> chatResponses = chatService.findAllMessagesByRoomId(chatRoomId);
 
-		return CustomResponse.ok(messageResponses);
+		return CustomResponse.ok(chatResponses);
 	}
 
 	//멤버id로 방리스트 가져오기

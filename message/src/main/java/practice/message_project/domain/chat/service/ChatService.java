@@ -9,7 +9,6 @@ import practice.message_project.domain.Member.repository.MemberRepository;
 import practice.message_project.domain.chat.domain.Chat;
 import practice.message_project.domain.chat.domain.ChatRoom;
 import practice.message_project.domain.chat.domain.ChatRoomMember;
-import practice.message_project.domain.chat.domain.MessageResponse;
 import practice.message_project.domain.chat.dto.request.ChatRequest;
 import practice.message_project.domain.chat.dto.response.ChatResponse;
 import practice.message_project.domain.chat.dto.response.RoomResponse;
@@ -147,16 +146,13 @@ public class ChatService {
 
 	// 방id로 방의 모든 message 찾기
 	@Transactional(readOnly = true)
-	public List<MessageResponse> findAllMessagesByRoomId(Long chatRoomId) {
+	public List<ChatResponse> findAllMessagesByRoomId(Long chatRoomId) {
 		ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId).orElseThrow();
-		List<MessageResponse> messageResponses;
 
 		List<Chat> chats = chatRepository.findAllByChatRoom(chatRoom);
-		messageResponses = chats.stream()
-			.map(MessageResponse::create)
+		return chats.stream()
+			.map(ChatResponse::create)
 			.toList();
-
-		return messageResponses;
 	}
 
 	//방 id로 방의 message 일부 찾기
