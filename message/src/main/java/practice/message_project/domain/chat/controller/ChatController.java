@@ -20,11 +20,9 @@ import practice.message_project.common.dto.CustomResponse;
 import practice.message_project.domain.chat.domain.Chat;
 import practice.message_project.domain.chat.dto.request.RoomEnterRequest;
 import practice.message_project.domain.chat.dto.response.ChatResponse;
-import practice.message_project.domain.chat.domain.ChatRoom;
 import practice.message_project.domain.chat.domain.MessageResponse;
 import practice.message_project.domain.chat.dto.request.ChatRequest;
 import practice.message_project.domain.chat.dto.response.RoomResponse;
-import practice.message_project.domain.chat.dto.response.RoomsResponse;
 import practice.message_project.domain.chat.service.ChatService;
 
 @Slf4j
@@ -67,9 +65,9 @@ public class ChatController {
 	//멤버id로 방리스트 가져오기
 	@GetMapping("/rooms/member/{memberId}")
 	@ResponseBody
-	public CustomResponse<RoomsResponse> roomListByMemberID(@PathVariable Long memberId) {
-		RoomsResponse roomsResponse = chatService.findChatRoomsByMemberId(memberId);
+	public CustomResponse<List<RoomResponse>> roomListByMemberID(@PathVariable Long memberId) {
+		List<RoomResponse> roomResponses = chatService.findChatRoomsByMemberId(memberId);
 
-		return CustomResponse.ok(roomsResponse);
+		return CustomResponse.ok(roomResponses);
 	}
 }

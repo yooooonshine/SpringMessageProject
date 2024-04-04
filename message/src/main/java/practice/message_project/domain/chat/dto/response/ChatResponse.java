@@ -2,8 +2,6 @@ package practice.message_project.domain.chat.dto.response;
 
 import java.time.LocalDateTime;
 
-import lombok.Builder;
-import lombok.Data;
 import lombok.Getter;
 import practice.message_project.domain.chat.domain.Chat;
 
@@ -26,7 +24,6 @@ public class ChatResponse {
 
 	public static ChatResponse create(Chat chat) {
 		Long roomId = chat.getId();
-		;
 		Long senderId = chat.getSender().getId();
 		String senderNickName = chat.getSender().getNickName();
 		String message = chat.getMessage();

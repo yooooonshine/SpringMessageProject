@@ -1,9 +1,9 @@
 package practice.message_project.domain.chat.service;
 
 import lombok.AccessLevel;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import practice.message_project.common.dto.CustomResponse;
 import practice.message_project.domain.Member.domain.Member;
 import practice.message_project.domain.Member.repository.MemberRepository;
 import practice.message_project.domain.chat.domain.Chat;
@@ -11,12 +11,16 @@ import practice.message_project.domain.chat.domain.ChatRoom;
 import practice.message_project.domain.chat.domain.ChatRoomMember;
 import practice.message_project.domain.chat.domain.MessageResponse;
 import practice.message_project.domain.chat.dto.request.ChatRequest;
+import practice.message_project.domain.chat.dto.response.ChatResponse;
 import practice.message_project.domain.chat.dto.response.RoomResponse;
-import practice.message_project.domain.chat.dto.response.RoomsResponse;
 import practice.message_project.domain.chat.repository.ChatRepository;
 import practice.message_project.domain.chat.repository.ChatRoomMemberRepository;
 import practice.message_project.domain.chat.repository.ChatRoomRepository;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,14 +48,15 @@ public class ChatService {
 
 	//멤버가 참여하는 방 찾기
 	@Transactional(readOnly = true)
-	public RoomsResponse findChatRoomsByMemberId(Long memberId){
+	public List<RoomResponse> findChatRoomsByMemberId(Long memberId){
 		Member member = memberRepository.findById(memberId).orElseThrow();
 
 		List<ChatRoomMember> chatRoomMembers = chatRoomMemberRepository.findAllByMember(member);
 
-		return RoomsResponse.create(chatRoomMembers.stream()
-			.map(chatRoomMember -> chatRoomMember.getChatRoom().getId())
-			.toList());
+		return chatRoomMembers.stream()
+			.map(chatRoomMember -> RoomResponse.create(chatRoomMember.getChatRoom().getId(), null, null
+			))
+			.toList();
 	}
 
 	//방 만들고 입장하기
@@ -66,7 +71,7 @@ public class ChatService {
 		addChatRoomMember(chatRoom, sender);
 		addChatRoomMember(chatRoom, receiver);
 
-		return RoomResponse.create(chatRoom.getId());
+		return RoomResponse.create(chatRoom.getId(), sender.getNickName(), chatRoom.getChats().get(chatRoom.getChats().size()).getMessage());
 	}
 
 	//방 만들기
@@ -152,6 +157,17 @@ public class ChatService {
 			.toList();
 
 		return messageResponses;
+	}
+
+	//방 id로 방의 message 일부 찾기
+	@Transactional(readOnly = true)
+	public CustomResponse<Slice<ChatResponse>> findMessagesByRoomId(Long chatRoomId, int pageNumber, int pageSize) {
+		Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "id"));
+
+		Slice<Chat> chats = chatRepository.findByChatRoomId(chatRoomId, pageable);
+
+		return CustomResponse.ok(chats.map(ChatResponse::create));
+
 	}
 
 	// ChatRoomMember 삭제
