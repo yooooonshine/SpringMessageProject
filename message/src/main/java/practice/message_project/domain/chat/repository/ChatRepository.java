@@ -13,4 +13,6 @@ public interface ChatRepository extends JpaRepository<Chat, Long> {
 	List<Chat> findAllByChatRoom(ChatRoom chatRoom);
 
 	Slice<Chat> findByChatRoomId(Long id, Pageable pageable);
+
+	Chat findTopByChatRoomOrderById(ChatRoom chatRoom);
 }

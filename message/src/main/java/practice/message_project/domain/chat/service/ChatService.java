@@ -1,20 +1,6 @@
 package practice.message_project.domain.chat.service;
 
-import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import practice.message_project.common.dto.CustomResponse;
-import practice.message_project.domain.Member.domain.Member;
-import practice.message_project.domain.Member.repository.MemberRepository;
-import practice.message_project.domain.chat.domain.Chat;
-import practice.message_project.domain.chat.domain.ChatRoom;
-import practice.message_project.domain.chat.domain.ChatRoomMember;
-import practice.message_project.domain.chat.dto.request.ChatRequest;
-import practice.message_project.domain.chat.dto.response.ChatResponse;
-import practice.message_project.domain.chat.dto.response.RoomResponse;
-import practice.message_project.domain.chat.repository.ChatRepository;
-import practice.message_project.domain.chat.repository.ChatRoomMemberRepository;
-import practice.message_project.domain.chat.repository.ChatRoomRepository;
+import java.util.List;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,7 +9,18 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import practice.message_project.domain.Member.domain.Member;
+import practice.message_project.domain.Member.repository.MemberRepository;
+import practice.message_project.domain.chat.domain.Chat;
+import practice.message_project.domain.chat.domain.ChatRoom;
+import practice.message_project.domain.chat.dto.request.ChatRequest;
+import practice.message_project.domain.chat.dto.response.ChatResponse;
+import practice.message_project.domain.chat.dto.response.RoomResponse;
+import practice.message_project.domain.chat.repository.ChatRepository;
+import practice.message_project.domain.chat.repository.ChatRoomRepository;
 
 @Slf4j
 @Service
@@ -31,31 +28,40 @@ import java.util.*;
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
 public class ChatService {
 	private final String OUT_MESSAGE = "%s님이 채팅방에서 나가셨습니다.";
+	private final String UNKNOWN_MAN = "(알 수 없음)";
 
 	private final ChatRoomRepository chatRoomRepository;
 	private final ChatRepository chatRepository;
-	private final ChatRoomMemberRepository chatRoomMemberRepository;
 	private final MemberRepository memberRepository;
-
-
-	//모든 방 찾기
-	@Transactional(readOnly = true)
-	public List<ChatRoom> findAllRoom(){
-		return chatRoomRepository.findAll();
-	}
-
 
 	//멤버가 참여하는 방 찾기
 	@Transactional(readOnly = true)
-	public List<RoomResponse> findChatRoomsByMemberId(Long memberId){
+	public Slice<RoomResponse> findChatRoomsByMemberId(Long memberId, int pageNumber, int pageSize) {
 		Member member = memberRepository.findById(memberId).orElseThrow();
+		Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "id"));
 
-		List<ChatRoomMember> chatRoomMembers = chatRoomMemberRepository.findAllByMember(member);
+		Slice<ChatRoom> chatRooms = chatRoomRepository.findAllByFromMemberOrToMember(member, member, pageable);
 
-		return chatRoomMembers.stream()
-			.map(chatRoomMember -> RoomResponse.create(chatRoomMember.getChatRoom().getId(), null, null
-			))
-			.toList();
+		return chatRooms.map(chatRoom -> {
+			Long chatRoomId = chatRoom.getId();
+			String roomName = findChatRoomName(member, chatRoom);
+			String recentChat = chatRepository.findTopByChatRoomOrderById(chatRoom).getMessage();
+
+			return RoomResponse.create(chatRoomId, roomName, recentChat);
+		});
+	}
+
+	//채팅방 이름 찾기
+	private String findChatRoomName(Member sender, ChatRoom chatRoom) {
+
+		// 메세지는 보내는 사람과 다른 사람의 이름이 채팅방 이름
+		if (chatRoom.getFromMember() == null || chatRoom.getToMember() == null) {
+			return UNKNOWN_MAN;
+		} else if (chatRoom.getFromMember() == sender) {
+			return chatRoom.getToMember().getNickName();
+		} else {
+			return chatRoom.getFromMember().getNickName();
+		}
 	}
 
 	//방 만들고 입장하기
@@ -64,18 +70,15 @@ public class ChatService {
 		Member receiver = memberRepository.findById(receiverId).orElseThrow();
 
 		//방 만들기
-		ChatRoom chatRoom = addRoom();
+		ChatRoom chatRoom = addRoom(sender, receiver);
 
-		//방에 멤버 넣기
-		addChatRoomMember(chatRoom, sender);
-		addChatRoomMember(chatRoom, receiver);
-
-		return RoomResponse.create(chatRoom.getId(), sender.getNickName(), chatRoom.getChats().get(chatRoom.getChats().size()).getMessage());
+		return RoomResponse.create(chatRoom.getId(), sender.getNickName(),
+			chatRoom.getChats().get(chatRoom.getChats().size()).getMessage());
 	}
 
 	//방 만들기
-	private ChatRoom addRoom() {
-		ChatRoom chatRoom = ChatRoom.create();
+	private ChatRoom addRoom(Member fromMember, Member toMember) {
+		ChatRoom chatRoom = ChatRoom.create(fromMember, toMember);
 
 		return chatRoomRepository.save(chatRoom);
 	}
@@ -86,14 +89,6 @@ public class ChatService {
 
 		return chatRepository.save(chat);
 	}
-
-
-	private ChatRoomMember addChatRoomMember(ChatRoom chatRoom, Member member) {
-		ChatRoomMember chatRoomMember = ChatRoomMember.create(chatRoom, member);
-
-		return chatRoomMemberRepository.save(chatRoomMember);
-	}
-
 
 	//채팅 응답 만들기
 	public Chat makeChat(ChatRequest chatRequest) {
@@ -124,14 +119,14 @@ public class ChatService {
 	//나가기 채팅 만들기
 	private Chat makeOutChat(ChatRequest chatRequest) {
 
-		log.info("makeOutChat");
 		ChatRoom chatRoom = chatRoomRepository.findById(chatRequest.getChatRoomId()).orElseThrow();
 		Member sender = memberRepository.findById(chatRequest.getSenderId()).orElseThrow();
 
-		deleteChatRoomMember(chatRoom, sender);
+		//채팅방 나가기
+		leaveChatRoom(chatRoom, sender);
 
 		//채팅방에 아무도 없으면 채팅방 및 채팅 삭제
-		if (!chatRoomMemberRepository.existsByChatRoom(chatRoom)) {
+		if (isEmptyRoom(chatRoom)) {
 			chatRoomRepository.delete(chatRoom);
 		}
 
@@ -157,30 +152,25 @@ public class ChatService {
 
 	//방 id로 방의 message 일부 찾기
 	@Transactional(readOnly = true)
-	public CustomResponse<Slice<ChatResponse>> findMessagesByRoomId(Long chatRoomId, int pageNumber, int pageSize) {
+	public Slice<ChatResponse> findMessagesByRoomId(Long chatRoomId, int pageNumber, int pageSize) {
 		Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "id"));
 
 		Slice<Chat> chats = chatRepository.findByChatRoomId(chatRoomId, pageable);
 
-		return CustomResponse.ok(chats.map(ChatResponse::create));
-
+		return chats.map(ChatResponse::create);
 	}
 
-	// ChatRoomMember 삭제
-	public void deleteChatRoomMember(ChatRoom chatRoom, Member member) {
-		ChatRoomMember chatRoomMember = chatRoomMemberRepository.findByChatRoomAndMember(chatRoom, member).orElseThrow();
-
-		chatRoomMemberRepository.delete(chatRoomMember);
+	// 채팅방 나가기
+	public void leaveChatRoom(ChatRoom chatRoom, Member member) {
+		if (member == chatRoom.getFromMember()) {
+			chatRoom.deleteFromMember();
+		}
+		chatRoom.deleteToMember();
 	}
 
-	// 채팅방 유저 리스트 삭제
-	public void deleteMember(Long roomId, Long memberId){
-		ChatRoom room = chatRoomRepository.findById(roomId).orElseThrow();
-		Member member = memberRepository.findById(memberId).orElseThrow();
-
-		ChatRoomMember chatRoomMember = chatRoomMemberRepository.findByChatRoomAndMember(room, member).orElseThrow();
-
-		chatRoomMemberRepository.delete(chatRoomMember);
+	// 채팅방 삭제 검사
+	public boolean isEmptyRoom(ChatRoom chatRoom) {
+		return (chatRoom.getToMember() == null && chatRoom.getFromMember() == null);
 	}
 
 }
