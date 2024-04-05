@@ -1,7 +1,5 @@
 package practice.message_project.domain.chat.service;
 
-import java.util.List;
-
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -18,7 +16,7 @@ import practice.message_project.domain.chat.domain.Chat;
 import practice.message_project.domain.chat.domain.ChatRoom;
 import practice.message_project.domain.chat.dto.request.ChatRequest;
 import practice.message_project.domain.chat.dto.response.ChatResponse;
-import practice.message_project.domain.chat.dto.response.RoomResponse;
+import practice.message_project.domain.chat.dto.response.ChatRoomResponse;
 import practice.message_project.domain.chat.repository.ChatRepository;
 import practice.message_project.domain.chat.repository.ChatRoomRepository;
 
@@ -36,7 +34,7 @@ public class ChatService {
 
 	//멤버가 참여하는 방 찾기
 	@Transactional(readOnly = true)
-	public Slice<RoomResponse> findChatRoomsByMemberId(Long memberId, int pageNumber, int pageSize) {
+	public Slice<ChatRoomResponse> findChatRoomsByMemberId(Long memberId, int pageNumber, int pageSize) {
 		Member member = memberRepository.findById(memberId).orElseThrow();
 		Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "id"));
 
@@ -47,7 +45,7 @@ public class ChatService {
 			String roomName = findChatRoomName(member, chatRoom);
 			String message = findLastMessage(chatRoom);
 
-			return RoomResponse.create(chatRoomId, roomName, message);
+			return ChatRoomResponse.create(chatRoomId, roomName, message);
 		});
 	}
 
@@ -72,14 +70,14 @@ public class ChatService {
 	}
 
 	//방 만들고 입장하기
-	public RoomResponse enterRoom(Long senderId, Long receiverId) {
+	public ChatRoomResponse enterRoom(Long senderId, Long receiverId) {
 		Member sender = memberRepository.findById(senderId).orElseThrow();
 		Member receiver = memberRepository.findById(receiverId).orElseThrow();
 
 		//방 만들기
 		ChatRoom chatRoom = addRoom(sender, receiver);
 
-		return RoomResponse.create(chatRoom.getId(), sender.getNickName(), null);
+		return ChatRoomResponse.create(chatRoom.getId(), sender.getNickName(), null);
 	}
 
 	//방 만들기

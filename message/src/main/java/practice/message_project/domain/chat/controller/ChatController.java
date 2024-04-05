@@ -1,7 +1,5 @@
 package practice.message_project.domain.chat.controller;
 
-import java.util.List;
-
 import org.springframework.data.domain.Slice;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -23,7 +21,7 @@ import practice.message_project.domain.chat.domain.Chat;
 import practice.message_project.domain.chat.dto.request.ChatRequest;
 import practice.message_project.domain.chat.dto.request.RoomEnterRequest;
 import practice.message_project.domain.chat.dto.response.ChatResponse;
-import practice.message_project.domain.chat.dto.response.RoomResponse;
+import practice.message_project.domain.chat.dto.response.ChatRoomResponse;
 import practice.message_project.domain.chat.service.ChatService;
 
 @Slf4j
@@ -47,13 +45,13 @@ public class ChatController {
 	//방 만들기
 	@PostMapping("/api/chatRooms")
 	@ResponseBody
-	public CustomResponse<RoomResponse> roomEnter(@RequestBody RoomEnterRequest roomEnterRequest) {
+	public CustomResponse<ChatRoomResponse> roomEnter(@RequestBody RoomEnterRequest roomEnterRequest) {
 		log.info("roomEnter... senderId : {}, receiverId : {}", roomEnterRequest.getSenderId(),
 			roomEnterRequest.getReceiverId());
-		RoomResponse roomResponse = chatService.enterRoom(roomEnterRequest.getSenderId(),
+		ChatRoomResponse chatRoomResponse = chatService.enterRoom(roomEnterRequest.getSenderId(),
 			roomEnterRequest.getReceiverId());
 
-		return CustomResponse.ok(roomResponse);
+		return CustomResponse.ok(chatRoomResponse);
 	}
 
 	//채팅방 메세지 가져오기
@@ -72,12 +70,12 @@ public class ChatController {
 	//멤버id로 방리스트 가져오기
 	@GetMapping("/api/chatRooms/members/{memberId}")
 	@ResponseBody
-	public CustomResponse<Slice<RoomResponse>> roomListByMemberID(
+	public CustomResponse<Slice<ChatRoomResponse>> roomListByMemberID(
 		@PathVariable Long memberId,
 		@PathParam("pageNumber") int pageNumber,
 		@PathParam("pageSize") int pageSize
 	) {
-		Slice<RoomResponse> roomResponses = chatService.findChatRoomsByMemberId(memberId, pageNumber, pageSize);
+		Slice<ChatRoomResponse> roomResponses = chatService.findChatRoomsByMemberId(memberId, pageNumber, pageSize);
 
 		return CustomResponse.ok(roomResponses);
 	}
