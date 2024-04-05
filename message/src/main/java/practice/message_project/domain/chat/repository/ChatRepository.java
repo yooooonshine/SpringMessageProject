@@ -11,7 +11,7 @@ import practice.message_project.domain.chat.domain.Chat;
 import practice.message_project.domain.chat.domain.ChatRoom;
 
 public interface ChatRepository extends JpaRepository<Chat, Long> {
-	List<Chat> findAllByChatRoom(ChatRoom chatRoom);
+	Slice<Chat> findAllByChatRoom(ChatRoom chatRoom, Pageable pageable);
 
 	Slice<Chat> findByChatRoomId(Long id, Pageable pageable);
 

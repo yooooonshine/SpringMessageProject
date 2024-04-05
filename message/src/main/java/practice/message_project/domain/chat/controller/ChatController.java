@@ -59,8 +59,12 @@ public class ChatController {
 	//채팅방 메세지 가져오기
 	@GetMapping("/api/chatRooms/{chatRoomId}/messages")
 	@ResponseBody
-	public CustomResponse<List<ChatResponse>> messageList(@PathVariable Long chatRoomId) {
-		List<ChatResponse> chatResponses = chatService.findAllMessagesByRoomId(chatRoomId);
+	public CustomResponse<Slice<ChatResponse>> messageList(
+		@PathVariable Long chatRoomId,
+		@PathParam("pageNumber") int pageNumber,
+		@PathParam("pageSize") int pageSize
+	) {
+		Slice<ChatResponse> chatResponses = chatService.findAllMessagesByRoomId(chatRoomId, pageNumber, pageSize);
 
 		return CustomResponse.ok(chatResponses);
 	}

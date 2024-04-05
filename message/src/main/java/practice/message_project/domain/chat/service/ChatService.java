@@ -147,13 +147,13 @@ public class ChatService {
 
 	// 방id로 방의 모든 message 찾기
 	@Transactional(readOnly = true)
-	public List<ChatResponse> findAllMessagesByRoomId(Long chatRoomId) {
+	public Slice<ChatResponse> findAllMessagesByRoomId(Long chatRoomId, int pageNumber, int pageSize) {
 		ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId).orElseThrow();
+		Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "id"));
 
-		List<Chat> chats = chatRepository.findAllByChatRoom(chatRoom);
-		return chats.stream()
-			.map(ChatResponse::create)
-			.toList();
+		Slice<Chat> chats = chatRepository.findAllByChatRoom(chatRoom, pageable);
+		return chats
+			.map(ChatResponse::create);
 	}
 
 	//방 id로 방의 message 일부 찾기
