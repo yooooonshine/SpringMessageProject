@@ -34,8 +34,8 @@ public class ChatController {
 	private final ChatService chatService;
 
 	//메세지 수신 및 전송
-	@MessageMapping("/{roomId}")
-	@SendTo("/sub/rooms/{roomId}")
+	@MessageMapping("/chatRooms/{roomId}")
+	@SendTo("/sub/chatRooms/{roomId}")
 	public CustomResponse<ChatResponse> chat(@DestinationVariable Long roomId, @Payload ChatRequest chatRequest) {
 		log.info("chat");
 		Chat chat = chatService.makeChat(chatRequest);
@@ -45,7 +45,7 @@ public class ChatController {
 	}
 
 	//방 만들기
-	@PostMapping("/api/room")
+	@PostMapping("/api/chatRooms")
 	@ResponseBody
 	public CustomResponse<RoomResponse> roomEnter(@RequestBody RoomEnterRequest roomEnterRequest) {
 		log.info("roomEnter... senderId : {}, receiverId : {}", roomEnterRequest.getSenderId(),
@@ -66,7 +66,7 @@ public class ChatController {
 	}
 
 	//멤버id로 방리스트 가져오기
-	@GetMapping("/api/rooms/member/{memberId}")
+	@GetMapping("/api/chatRooms/members/{memberId}")
 	@ResponseBody
 	public CustomResponse<Slice<RoomResponse>> roomListByMemberID(
 		@PathVariable Long memberId,
