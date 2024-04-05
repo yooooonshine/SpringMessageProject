@@ -43,6 +43,7 @@ public class Chat {
 	private Member sender;
 
 	@NotNull
+	@Column(length = 1000)
 	private String message;
 
 	@CreatedDate
