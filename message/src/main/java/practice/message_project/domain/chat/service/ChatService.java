@@ -159,17 +159,6 @@ public class ChatService {
 		return chat;
 	}
 
-	// 방id로 방의 모든 message 찾기
-	@Transactional(readOnly = true)
-	public Slice<ChatResponse> findAllMessagesByRoomId(Long chatRoomId, int pageNumber, int pageSize) {
-		ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId).orElseThrow();
-		Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "id"));
-
-		Slice<Chat> chats = chatRepository.findAllByChatRoom(chatRoom, pageable);
-		return chats
-			.map(ChatResponse::create);
-	}
-
 	//방 id로 방의 message 일부 찾기
 	@Transactional(readOnly = true)
 	public Slice<ChatResponse> findMessagesByRoomId(Long chatRoomId, int pageNumber, int pageSize) {

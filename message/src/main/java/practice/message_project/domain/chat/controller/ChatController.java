@@ -62,7 +62,7 @@ public class ChatController {
 		@PathParam("pageNumber") int pageNumber,
 		@PathParam("pageSize") int pageSize
 	) {
-		Slice<ChatResponse> chatResponses = chatService.findAllMessagesByRoomId(chatRoomId, pageNumber, pageSize);
+		Slice<ChatResponse> chatResponses = chatService.findMessagesByRoomId(chatRoomId, pageNumber, pageSize);
 
 		return CustomResponse.ok(chatResponses);
 	}
