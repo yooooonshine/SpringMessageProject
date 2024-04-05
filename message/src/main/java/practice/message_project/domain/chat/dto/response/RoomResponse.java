@@ -7,16 +7,16 @@ public class RoomResponse {
 
 	private final Long roomId;
 	private final String roomName;
-	private final String recentChat;
+	private final String lastMessage;
 
-	public RoomResponse(Long roomId, String roomName, String recentChat) {
+	public RoomResponse(Long roomId, String roomName, String lastMessage) {
 		this.roomId = roomId;
 		this.roomName = roomName;
-		this.recentChat = recentChat;
+		this.lastMessage = lastMessage;
 	}
 
-	public static RoomResponse create(Long roomId, String roomName, String recentChat) {
-		return new RoomResponse(roomId, roomName, recentChat);
+	public static RoomResponse create(Long roomId, String roomName, String lastMessage) {
+		return new RoomResponse(roomId, roomName, lastMessage);
 	}
 
 }

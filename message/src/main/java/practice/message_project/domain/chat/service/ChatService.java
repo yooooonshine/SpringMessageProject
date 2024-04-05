@@ -45,10 +45,17 @@ public class ChatService {
 		return chatRooms.map(chatRoom -> {
 			Long chatRoomId = chatRoom.getId();
 			String roomName = findChatRoomName(member, chatRoom);
-			String recentChat = chatRepository.findTopByChatRoomOrderById(chatRoom).getMessage();
+			String message = findLastMessage(chatRoom);
 
-			return RoomResponse.create(chatRoomId, roomName, recentChat);
+			return RoomResponse.create(chatRoomId, roomName, message);
 		});
+	}
+
+	//채팅방에 메세지 있는 지 확인하고, 없으면 null, 있으면 message리턴
+	private String findLastMessage(ChatRoom chatRoom) {
+		return chatRepository.findTopByChatRoomOrderById(chatRoom)
+			.map(Chat::getMessage)
+			.orElse(null);
 	}
 
 	//채팅방 이름 찾기
@@ -72,8 +79,7 @@ public class ChatService {
 		//방 만들기
 		ChatRoom chatRoom = addRoom(sender, receiver);
 
-		return RoomResponse.create(chatRoom.getId(), sender.getNickName(),
-			chatRoom.getChats().get(chatRoom.getChats().size()).getMessage());
+		return RoomResponse.create(chatRoom.getId(), sender.getNickName(), null);
 	}
 
 	//방 만들기
@@ -161,7 +167,7 @@ public class ChatService {
 	}
 
 	// 채팅방 나가기
-	public void leaveChatRoom(ChatRoom chatRoom, Member member) {
+	private void leaveChatRoom(ChatRoom chatRoom, Member member) {
 		if (member == chatRoom.getFromMember()) {
 			chatRoom.deleteFromMember();
 		}
@@ -169,7 +175,7 @@ public class ChatService {
 	}
 
 	// 채팅방 삭제 검사
-	public boolean isEmptyRoom(ChatRoom chatRoom) {
+	private boolean isEmptyRoom(ChatRoom chatRoom) {
 		return (chatRoom.getToMember() == null && chatRoom.getFromMember() == null);
 	}
 

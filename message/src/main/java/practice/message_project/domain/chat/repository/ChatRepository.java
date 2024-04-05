@@ -1,6 +1,7 @@
 package practice.message_project.domain.chat.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -14,5 +15,5 @@ public interface ChatRepository extends JpaRepository<Chat, Long> {
 
 	Slice<Chat> findByChatRoomId(Long id, Pageable pageable);
 
-	Chat findTopByChatRoomOrderById(ChatRoom chatRoom);
+	Optional<Chat> findTopByChatRoomOrderById(ChatRoom chatRoom);
 }
