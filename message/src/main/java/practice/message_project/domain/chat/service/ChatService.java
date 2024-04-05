@@ -1,11 +1,15 @@
 package practice.message_project.domain.chat.service;
 
+import java.util.Optional;
+
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.fasterxml.jackson.annotation.OptBoolean;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -74,10 +78,22 @@ public class ChatService {
 		Member sender = memberRepository.findById(senderId).orElseThrow();
 		Member receiver = memberRepository.findById(receiverId).orElseThrow();
 
-		//방 만들기
-		ChatRoom chatRoom = addRoom(sender, receiver);
+		Optional<ChatRoom> chatRoomByMembers = findChatRoomByMembers(sender, receiver);
 
+		//이미 방이 존재할 떄
+		if (chatRoomByMembers.isPresent()) {
+			ChatRoom chatRoom = chatRoomByMembers.get();
+
+			return ChatRoomResponse.create(chatRoom.getId(), sender.getNickName(), findLastMessage(chatRoom));
+		}
+		//방이 존재하지 않을 때
+		ChatRoom chatRoom = addRoom(sender, receiver);
 		return ChatRoomResponse.create(chatRoom.getId(), sender.getNickName(), null);
+	}
+
+	//두 멤버의 방이 있는 지 확인
+	private Optional<ChatRoom> findChatRoomByMembers(Member sender, Member receiver) {
+		return chatRoomRepository.findChatRoomByMembers(sender, receiver);
 	}
 
 	//방 만들기
