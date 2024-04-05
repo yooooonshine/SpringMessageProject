@@ -12,6 +12,7 @@
     enabled. Please enable
     Javascript and reload this page!</h2></noscript>
 <div id="main-content" class="container">
+    <div>유저(나)</div>
     <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
         <input type="radio" class="btn-check" name="btnradio" id="btnradio1" autocomplete="off" checked onclick="switchMember(1)">
         <label class="btn btn-outline-primary" for="btnradio1">멤버1</label>
@@ -23,15 +24,16 @@
         <label class="btn btn-outline-primary" for="btnradio3">멤버3</label>
     </div>
 
-    <div class="btn-group" role="group" aria-label="Basic checkbox toggle button group">
-        <input type="checkbox" class="btn-check" id="btncheck1" autocomplete="off" onclick="switchReceiver(1)">
-        <label class="btn btn-outline-primary" for="btncheck1">멤버1과 채팅하기</label>
+    <div>친구 목록</div>
+    <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
+        <input type="radio" class="btn-check" name="btnradio2" id="btnradio4" autocomplete="off" checked onclick="switchReceiver(1)">
+        <label class="btn btn-outline-primary" for="btnradio4">멤버1과 채팅하기</label>
 
-        <input type="checkbox" class="btn-check" id="btncheck2" autocomplete="off" onclick="switchReceiver(2)">
-        <label class="btn btn-outline-primary" for="btncheck2">멤버2와 채팅하기</label>
+        <input type="radio" class="btn-check" name="btnradio2" id="btnradio5" autocomplete="off" onclick="switchReceiver(2)">
+        <label class="btn btn-outline-primary" for="btnradio5">멤버2와 채팅하기</label>
 
-        <input type="checkbox" class="btn-check" id="btncheck3" autocomplete="off" onclick="switchReceiver(3)">
-        <label class="btn btn-outline-primary" for="btncheck3">멤버3과 채팅하기</label>
+        <input type="radio" class="btn-check" name="btnradio2" id="btnradio6" autocomplete="off" onclick="switchReceiver(3)">
+        <label class="btn btn-outline-primary" for="btnradio6">멤버3과 채팅하기</label>
     </div>
 
     <div>채팅방목록</div>
@@ -42,22 +44,13 @@
         <div class="col-md-6">
             <form class="form-inline">
                 <div class="form-group">
-                    <label for="connect">WebSocket connection:</label>
-                    <button id="connect" class="btn btn-default" type="submit" >앱시작</button>
-                    <button id="disconnect" class="btn btn-default" type="submit" disabled="disabled" >앱종료
-                    </button>
-                </div>
-            </form>
-        </div>
-        <div class="col-md-6">
-            <form class="form-inline">
-                <div class="form-group">
                     <label for="message">What is your name?</label>
                     <input type="text" id="message" class="form-control" placeholder="Your message here...">
                 </div>
                 <button id="enter" class="btn btn-default" type="submit" onclick="makeRoom()">방입장</button>
                 <button id="send" class="btn btn-default" type="submit" onclick="sendTalkMessage()">메세지 전송</button>
-                <button id="out" class="btn btn-default" type="submit" onclick="sendOutMessage()">나가기</button>
+                <button id="out" class="btn btn-default" type="submit" onclick="sendOutMessage()">완전히나가기</button>
+                <button id="exit" class="btn btn-default" type="submit" onclick="disconnect()">세션연결 종료(창닫기)</button>
             </form>
         </div>
     </div>
@@ -74,6 +67,7 @@
             </table>
         </div>
     </div>
+    <button onclick="makeRoom()">방만들자</button>
 </div>
 
 <script src="/js/app.js"></script>
