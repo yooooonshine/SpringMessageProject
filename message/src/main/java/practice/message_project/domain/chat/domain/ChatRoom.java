@@ -1,5 +1,6 @@
 package practice.message_project.domain.chat.domain;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,10 +33,16 @@ public class ChatRoom {
 	@JoinColumn(name = "FROM_MEMBER_ID")
 	private Member fromMember;
 
+	// fromMember가 마지막으로 메세지를 읽은 시간
+	private LocalDateTime fromMemberLastRead;
+
 	// 처음 메세지를 받은 사람
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "TO_MEMBER_ID")
 	private Member toMember;
+
+	// toMember가 마지막으로 메세지를 읽은 시간
+	private LocalDateTime toMemberLastRead;
 
 	@OneToMany(mappedBy = "chatRoom", fetch = FetchType.LAZY)
 	private List<Chat> chats = new ArrayList<>();
@@ -59,5 +66,13 @@ public class ChatRoom {
 
 	public void deleteToMember() {
 		this.toMember = null;
+	}
+
+	public void updateFromMemberLastRead() {
+		fromMemberLastRead = LocalDateTime.now();
+	}
+
+	public void updateToMemberLastRead() {
+		toMemberLastRead = LocalDateTime.now();
 	}
 }
